@@ -249,6 +249,9 @@ index 2f88dfe7f2aa68c658a91d756f8ea5d311cb43f8..ebf4f579f1abffe3528fe3f608fa661f
    printing_rfh_ = nullptr;
  
 +  if (!callback_.is_null()) {
++    registrar_.Remove(this, chrome::NOTIFICATION_PRINT_JOB_EVENT,
++                  content::NotificationService::AllSources());
++
 +    std::string cb_str = "";
 +    if (!printing_succeeded_)
 +      cb_str = printing_cancelled_ ? "cancelled" : "failed";
@@ -263,9 +266,6 @@ index 2f88dfe7f2aa68c658a91d756f8ea5d311cb43f8..ebf4f579f1abffe3528fe3f608fa661f
  
 -  registrar_.Remove(this, chrome::NOTIFICATION_PRINT_JOB_EVENT,
 -                    content::Source<PrintJob>(print_job_.get()));
-+  if (!callback_.is_null())
-+    registrar_.Remove(this, chrome::NOTIFICATION_PRINT_JOB_EVENT,
-+                      content::NotificationService::AllSources());
    // Don't close the worker thread.
    print_job_ = nullptr;
  }
