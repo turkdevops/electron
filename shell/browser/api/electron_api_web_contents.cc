@@ -21,9 +21,10 @@
 #include "base/threading/thread_task_runner_handle.h"
 #include "base/values.h"
 #include "chrome/browser/browser_process.h"
+#include "chrome/browser/hang_monitor/hang_crash_dump.h"
 #include "chrome/browser/ssl/security_state_tab_helper.h"
-#include "content/browser/frame_host/frame_tree_node.h"             // nogncheck
-#include "content/browser/frame_host/render_frame_host_manager.h"   // nogncheck
+#include "content/browser/renderer_host/frame_tree_node.h"  // nogncheck
+#include "content/browser/renderer_host/render_frame_host_manager.h"  // nogncheck
 #include "content/browser/renderer_host/render_widget_host_impl.h"  // nogncheck
 #include "content/browser/renderer_host/render_widget_host_view_base.h"  // nogncheck
 #include "content/common/widget_messages.h"
@@ -392,10 +393,20 @@ base::string16 GetDefaultPrinterAsync() {
   base::ScopedBlockingCall scoped_blocking_call(FROM_HERE,
                                                 base::BlockingType::MAY_BLOCK);
 
-  scoped_refptr<printing::PrintBackend> backend =
+  scoped_refptr<printing::PrintBackend> print_backend =
       printing::PrintBackend::CreateInstance(
-          nullptr, g_browser_process->GetApplicationLocale());
-  std::string printer_name = backend->GetDefaultPrinterName();
+          g_browser_process->GetApplicationLocale());
+  std::string printer_name = print_backend->GetDefaultPrinterName();
+
+  // Some devices won't have a default printer, so we should
+  // also check for existing printers and pick the first
+  // one should it exist.
+  if (printer_name.empty()) {
+    printing::PrinterList printers;
+    print_backend->EnumeratePrinters(&printers);
+    if (printers.size() > 0)
+      printer_name = printers.front().printer_name;
+  }
   return base::UTF8ToUTF16(printer_name);
 }
 #endif
@@ -1230,6 +1241,12 @@ void WebContents::Invoke(bool internal,
                  std::move(callback), internal, channel, std::move(arguments));
 }
 
+void WebContents::OnFirstNonEmptyLayout() {
+  if (receivers_.current_context() == web_contents()->GetMainFrame()) {
+    Emit("ready-to-show");
+  }
+}
+
 void WebContents::ReceivePostMessage(const std::string& channel,
                                      blink::TransferableMessage message) {
   v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
@@ -1558,7 +1575,7 @@ void WebContents::SetBackgroundThrottling(bool allowed) {
   web_contents()->GetRenderViewHost()->SetSchedulerThrottling(allowed);
 
   if (rwh_impl->is_hidden()) {
-    rwh_impl->WasShown(base::nullopt);
+    rwh_impl->WasShown({});
   }
 }
 
@@ -1745,6 +1762,30 @@ void WebContents::SetWebRTCIPHandlingPolicy(
 
 bool WebContents::IsCrashed() const {
   return web_contents()->IsCrashed();
+}
+
+void WebContents::ForcefullyCrashRenderer() {
+  content::RenderWidgetHostView* view =
+      web_contents()->GetRenderWidgetHostView();
+  if (!view)
+    return;
+
+  content::RenderWidgetHost* rwh = view->GetRenderWidgetHost();
+  if (!rwh)
+    return;
+
+  content::RenderProcessHost* rph = rwh->GetProcess();
+  if (rph) {
+#if defined(OS_LINUX) || defined(OS_CHROMEOS)
+    // A generic |CrashDumpHungChildProcess()| is not implemented for Linux.
+    // Instead we send an explicit IPC to crash on the renderer's IO thread.
+    rph->ForceCrash();
+#else
+    // Try to generate a crash report for the hung process.
+    CrashDumpHungChildProcess(rph->GetProcess().Handle());
+    rph->Shutdown(content::RESULT_CODE_HUNG);
+#endif
+  }
 }
 
 void WebContents::SetUserAgent(const std::string& user_agent) {
@@ -2068,8 +2109,9 @@ void WebContents::Print(gin::Arguments* args) {
   // Set whether to print color or greyscale
   bool print_color = true;
   options.Get("color", &print_color);
-  int color_setting = print_color ? printing::COLOR : printing::GRAY;
-  settings.SetIntKey(printing::kSettingColor, color_setting);
+  auto const color_model = print_color ? printing::mojom::ColorModel::kColor
+                                       : printing::mojom::ColorModel::kGray;
+  settings.SetIntKey(printing::kSettingColor, static_cast<int>(color_model));
 
   // Is the orientation landscape or portrait.
   bool landscape = false;
@@ -2183,10 +2225,10 @@ void WebContents::Print(gin::Arguments* args) {
                      std::move(callback), device_name, silent));
 }
 
-std::vector<printing::PrinterBasicInfo> WebContents::GetPrinterList() {
-  std::vector<printing::PrinterBasicInfo> printers;
+printing::PrinterList WebContents::GetPrinterList() {
+  printing::PrinterList printers;
   auto print_backend = printing::PrintBackend::CreateInstance(
-      nullptr, g_browser_process->GetApplicationLocale());
+      g_browser_process->GetApplicationLocale());
   {
     // TODO(deepak1556): Deprecate this api in favor of an
     // async version and post a non blocing task call.
@@ -2904,6 +2946,8 @@ v8::Local<v8::ObjectTemplate> WebContents::FillObjectTemplate(
       .SetMethod("_goForward", &WebContents::GoForward)
       .SetMethod("_goToOffset", &WebContents::GoToOffset)
       .SetMethod("isCrashed", &WebContents::IsCrashed)
+      .SetMethod("forcefullyCrashRenderer",
+                 &WebContents::ForcefullyCrashRenderer)
       .SetMethod("setUserAgent", &WebContents::SetUserAgent)
       .SetMethod("getUserAgent", &WebContents::GetUserAgent)
       .SetMethod("savePage", &WebContents::SavePage)

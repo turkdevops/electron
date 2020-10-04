@@ -121,7 +121,7 @@ const defaultPrintingSetting = {
 
 // JavaScript implementations of WebContents.
 const binding = process._linkedBinding('electron_browser_web_contents');
-const { WebContents } = binding as { WebContents: { prototype: Electron.WebContentsInternal } };
+const { WebContents } = binding as { WebContents: { prototype: Electron.WebContents } };
 
 WebContents.prototype.send = function (channel, ...args) {
   if (typeof channel !== 'string') {
@@ -200,7 +200,7 @@ for (const method of webFrameMethods) {
   };
 }
 
-const waitTillCanExecuteJavaScript = async (webContents: Electron.WebContentsInternal) => {
+const waitTillCanExecuteJavaScript = async (webContents: Electron.WebContents) => {
   if (webContents.getURL() && !webContents.isLoadingMainFrame()) return;
 
   return new Promise((resolve) => {
@@ -461,6 +461,10 @@ const addReturnValueToEvent = (event: any) => {
   });
 };
 
+const loggingEnabled = () => {
+  return process.env.ELECTRON_ENABLE_LOGGING || app.commandLine.hasSwitch('enable-logging');
+};
+
 // Add JavaScript wrappers for WebContents class.
 WebContents.prototype._init = function () {
   // The navigation controller.
@@ -487,7 +491,7 @@ WebContents.prototype._init = function () {
   this.setMaxListeners(0);
 
   // Dispatch IPC messages to the ipc module.
-  this.on('-ipc-message' as any, function (this: Electron.WebContentsInternal, event: any, internal: boolean, channel: string, args: any[]) {
+  this.on('-ipc-message' as any, function (this: Electron.WebContents, event: any, internal: boolean, channel: string, args: any[]) {
     if (internal) {
       addReplyInternalToEvent(event);
       ipcMainInternal.emit(channel, event, ...args);
@@ -512,7 +516,7 @@ WebContents.prototype._init = function () {
     }
   });
 
-  this.on('-ipc-message-sync' as any, function (this: Electron.WebContentsInternal, event: any, internal: boolean, channel: string, args: any[]) {
+  this.on('-ipc-message-sync' as any, function (this: Electron.WebContents, event: any, internal: boolean, channel: string, args: any[]) {
     addReturnValueToEvent(event);
     if (internal) {
       addReplyInternalToEvent(event);
@@ -545,19 +549,24 @@ WebContents.prototype._init = function () {
     app.emit('renderer-process-crashed', event, this, ...args);
   });
 
-  this.on('render-process-gone', (event, ...args) => {
-    app.emit('render-process-gone', event, this, ...args);
+  this.on('render-process-gone', (event, details) => {
+    app.emit('render-process-gone', event, this, details);
+
+    // Log out a hint to help users better debug renderer crashes.
+    if (loggingEnabled()) {
+      console.info(`Renderer process ${details.reason} - see https://www.electronjs.org/docs/tutorial/application-debugging for potential debugging information.`);
+    }
   });
 
   // The devtools requests the webContents to reload.
-  this.on('devtools-reload-page', function (this: Electron.WebContentsInternal) {
+  this.on('devtools-reload-page', function (this: Electron.WebContents) {
     this.reload();
   });
 
   if (this.getType() !== 'remote') {
     // Make new windows requested by links behave like "window.open".
     this.on('-new-window' as any, (event: any, url: string, frameName: string, disposition: string,
-      rawFeatures: string, referrer: string, postData: string) => {
+      rawFeatures: string, referrer: string, postData: Electron.UploadRawData[]) => {
       const { options, webPreferences, additionalFeatures } = parseFeatures(rawFeatures);
       const mergedOptions = {
         show: true,
@@ -573,9 +582,9 @@ WebContents.prototype._init = function () {
 
     // Create a new browser window for the native implementation of
     // "window.open", used in sandbox and nativeWindowOpen mode.
-    this.on('-add-new-contents' as any, (event: any, webContents: Electron.WebContentsInternal, disposition: string,
+    this.on('-add-new-contents' as any, (event: any, webContents: Electron.WebContents, disposition: string,
       userGesture: boolean, left: number, top: number, width: number, height: number, url: string, frameName: string,
-      referrer: string, rawFeatures: string, postData: string) => {
+      referrer: string, rawFeatures: string, postData: Electron.UploadRawData[]) => {
       if ((disposition !== 'foreground-tab' && disposition !== 'new-window' &&
            disposition !== 'background-tab')) {
         event.preventDefault();
@@ -604,6 +613,15 @@ WebContents.prototype._init = function () {
 
   this.on('login', (event, ...args) => {
     app.emit('login', event, this, ...args);
+  });
+
+  this.on('ready-to-show' as any, () => {
+    const owner = this.getOwnerBrowserWindow();
+    if (owner && !owner.isDestroyed()) {
+      process.nextTick(() => {
+        owner.emit('ready-to-show');
+      });
+    }
   });
 
   const event = process._linkedBinding('electron_browser_event').createEmpty();

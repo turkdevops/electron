@@ -228,6 +228,7 @@ class WebContents : public gin::Wrappable<WebContents>,
   const std::string GetWebRTCIPHandlingPolicy() const;
   void SetWebRTCIPHandlingPolicy(const std::string& webrtc_ip_handling_policy);
   bool IsCrashed() const;
+  void ForcefullyCrashRenderer();
   void SetUserAgent(const std::string& user_agent);
   std::string GetUserAgent();
   void InsertCSS(const std::string& css);
@@ -263,7 +264,7 @@ class WebContents : public gin::Wrappable<WebContents>,
                            bool silent,
                            base::string16 default_printer);
   void Print(gin::Arguments* args);
-  std::vector<printing::PrinterBasicInfo> GetPrinterList();
+  printing::PrinterList GetPrinterList();
   // Print current page as PDF.
   v8::Local<v8::Promise> PrintToPDF(base::DictionaryValue settings);
 #endif
@@ -631,6 +632,7 @@ class WebContents : public gin::Wrappable<WebContents>,
               const std::string& channel,
               blink::CloneableMessage arguments,
               InvokeCallback callback) override;
+  void OnFirstNonEmptyLayout() override;
   void ReceivePostMessage(const std::string& channel,
                           blink::TransferableMessage message) override;
   void MessageSync(bool internal,
