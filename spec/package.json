@@ -10,7 +10,7 @@
     "basic-auth": "^2.0.1",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "coffeescript": "^2.4.1",
+    "coffeescript": "^2.5.1",
     "dbus-native": "github:jkleinsc/dbus-native#master",
     "dirty-chai": "^2.0.1",
     "graceful-fs": "^4.1.15",
