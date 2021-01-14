@@ -20,7 +20,7 @@
     "@types/semver": "^7.3.4",
     "@types/send": "^0.14.5",
     "@types/split": "^1.0.0",
-    "@types/uuid": "^3.4.6",
+    "@types/uuid": "^3.4.9",
     "@types/webpack": "^4.41.21",
     "@types/webpack-env": "^1.15.2",
     "@typescript-eslint/eslint-plugin": "^3.9.1",
