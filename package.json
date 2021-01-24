@@ -53,7 +53,7 @@
     "remark-preset-lint-markdown-style-guide": "^2.1.4",
     "request": "^2.88.2",
     "semver": "^5.7.1",
-    "shx": "^0.3.2",
+    "shx": "^0.3.3",
     "standard-markdown": "^6.0.0",
     "sumchecker": "^2.0.2",
     "tap-xunit": "^2.4.1",
