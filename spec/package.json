@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "basic-auth": "^2.0.1",
-    "chai": "^4.2.0",
+    "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
     "coffeescript": "^2.5.1",
     "dbus-native": "github:jkleinsc/dbus-native#master",
