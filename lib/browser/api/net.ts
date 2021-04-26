@@ -103,7 +103,8 @@ class IncomingMessage extends Readable {
     throw new Error('HTTP trailers are not supported');
   }
 
-  _storeInternalData (chunk: Buffer | null) {
+  _storeInternalData (chunk: Buffer | null, resume /* TODO*/) {
+    // TODO: save |resume| function somewhere? on this._resume?
     this._data.push(chunk);
     this._pushInternalData();
   }
@@ -113,6 +114,7 @@ class IncomingMessage extends Readable {
       const chunk = this._data.shift();
       this._shouldPush = this.push(chunk);
     }
+    // TODO: call |this._resume| here if _shouldPush is true?
   }
 
   _read () {
@@ -404,7 +406,9 @@ export class ClientRequest extends Writable implements Electron.ClientRequest {
       const response = this._response = new IncomingMessage(responseHead);
       this.emit('response', response);
     });
-    this._urlLoader.on('data', (event, data) => {
+    this._urlLoader.on('data', (event, data, resume) => {
+      // TODO: we need to call |resume| in order to get the next chunk from the
+      // network. 
       this._response!._storeInternalData(Buffer.from(data));
     });
     this._urlLoader.on('complete', () => {
