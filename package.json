@@ -21,7 +21,7 @@
     "@types/send": "^0.14.7",
     "@types/split": "^1.0.0",
     "@types/uuid": "^3.4.9",
-    "@types/webpack": "^4.41.26",
+    "@types/webpack": "^4.41.28",
     "@types/webpack-env": "^1.16.0",
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
