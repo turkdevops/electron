@@ -17,7 +17,7 @@
     "@types/fs-extra": "^9.0.10",
     "@types/mocha": "^7.0.2",
     "@types/node": "^14.14.22",
-    "@types/semver": "^7.3.4",
+    "@types/semver": "^7.3.6",
     "@types/send": "^0.14.7",
     "@types/split": "^1.0.0",
     "@types/uuid": "^3.4.9",
