@@ -139,6 +139,6 @@
   },
   "dependencies": {
     "@types/temp": "^0.8.34",
-    "aws-sdk": "^2.823.0"
+    "aws-sdk": "^2.833.0"
   }
 }
