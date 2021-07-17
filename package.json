@@ -16,7 +16,7 @@
     "@types/express": "^4.17.11",
     "@types/fs-extra": "^9.0.11",
     "@types/mocha": "^7.0.2",
-    "@types/node": "^14.14.22",
+    "@types/node": "^14.14.41",
     "@types/semver": "^7.3.7",
     "@types/send": "^0.14.7",
     "@types/split": "^1.0.0",
