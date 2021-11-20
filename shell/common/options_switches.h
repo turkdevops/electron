@@ -119,8 +119,6 @@ extern const char kAppPath[];
 extern const char kEnableApiFilteringLogging[];
 
 extern const char kBackgroundColor[];
-extern const char kPreloadScript[];
-extern const char kPreloadScripts[];
 extern const char kNodeIntegration[];
 extern const char kContextIsolation[];
 extern const char kWorldSafeExecuteJavaScript[];

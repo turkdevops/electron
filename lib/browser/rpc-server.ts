@@ -92,8 +92,13 @@ ipcMainUtils.handleSync('ELECTRON_BROWSER_SANDBOX_LOAD', async function (event: 
   const preloadPaths = event.sender._getPreloadPaths();
   const webPreferences = event.sender.getLastWebPreferences() || {};
 
+  const preloadScripts = await Promise.all(preloadPaths.map(path => getPreloadScript(path)));
+  if (webPreferences.preloadSrc) {
+    preloadScripts.push({ preloadPath: '<preloadSrc>', preloadSrc: webPreferences.preloadSrc, preloadError: null });
+  }
+
   return {
-    preloadScripts: await Promise.all(preloadPaths.map(path => getPreloadScript(path))),
+    preloadScripts,
     isRemoteModuleEnabled: isRemoteModuleEnabled(event.sender),
     isWebViewTagEnabled: guestViewManager.isWebViewTagEnabled(event.sender),
     guestInstanceId: webPreferences.guestInstanceId,
@@ -106,6 +111,20 @@ ipcMainUtils.handleSync('ELECTRON_BROWSER_SANDBOX_LOAD', async function (event: 
       versions: process.versions,
       execPath: process.helperExecPath
     }
+  };
+});
+
+ipcMainUtils.handleSync('ELECTRON_BROWSER_LOAD', async function (event) {
+  const preloadPaths = event.sender._getPreloadPaths();
+  const webPreferences = event.sender.getLastWebPreferences() || {};
+
+  const preloadScripts: ({ path: string } | { src: string })[] = preloadPaths.map(path => ({ path }));
+  if (webPreferences.preloadSrc) {
+    preloadScripts.push({ src: webPreferences.preloadSrc });
+  }
+
+  return {
+    preloadScripts
   };
 });
 
