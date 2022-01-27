@@ -315,10 +315,10 @@
     "@types/connect" "*"
     "@types/node" "*"
 
-"@types/busboy@^0.2.4":
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/@types/busboy/-/busboy-0.2.4.tgz#19922f8c7076ad6d47b2565da8c0a94c88776315"
-  integrity sha512-f+ZCVjlcN8JW/zf3iR0GqO4gjOUlltMTtZjn+YR1mlK+MVu6esTiIecO0/GQlmYQPQLdBnc7+5vG3Xb+SkvFLw==
+"@types/busboy@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@types/busboy/-/busboy-0.3.2.tgz#2f29b017513415399c42632ae6a7cfcb1409b79c"
+  integrity sha512-iEvdm9Z9KdSs/ozuh1Z7ZsXrOl8F4M/CLMXPZHr3QuJ4d6Bjn+HBMC5EMKpwpAo8oi8iK9GZfFoHaIMrrZgwVw==
   dependencies:
     "@types/node" "*"
 

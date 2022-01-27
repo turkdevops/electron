@@ -9,7 +9,7 @@
     "@octokit/rest": "^18.12.0",
     "@primer/octicons": "^10.1.0",
     "@types/basic-auth": "^1.1.3",
-    "@types/busboy": "^0.2.4",
+    "@types/busboy": "^0.3.2",
     "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
     "@types/dirty-chai": "^2.0.2",
