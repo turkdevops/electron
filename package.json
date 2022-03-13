@@ -46,7 +46,7 @@
     "lint": "^1.1.2",
     "lint-staged": "^10.5.4",
     "minimist": "^1.2.5",
-    "nugget": "^2.0.1",
+    "nugget": "^2.0.2",
     "null-loader": "^4.0.1",
     "pre-flight": "^1.1.0",
     "remark-cli": "^7.0.0",
