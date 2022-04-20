@@ -8,7 +8,7 @@
     "postinstall": "node install.js"
   },
   "dependencies": {
-    "@electron/get": "1.12.4",
+    "@electron/get": "1.14.1",
     "@types/node": "16.11.13",
     "extract-zip": "^2.0.1"
   },
